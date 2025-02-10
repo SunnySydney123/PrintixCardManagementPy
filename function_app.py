@@ -7,6 +7,7 @@ import aiohttp
 import os
 
 
+
 app = func.FunctionApp()
 
 @app.function_name(name="ProcessWebhook")
@@ -154,48 +155,88 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                     body="User email is missing in the response",
                     status_code=500
                 )
+             # After getting user_email, lookup in CSV file to get the card number
+            connection_string = os.environ['StorageConnectionString']
+            blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+            container_client = blob_service_client.get_container_client("cuttysark-accesscards")
+            blob_client = container_client.get_blob_client("UserCardDetails.csv")
             
-            logging.info(f"User email: {user_email}")
+            # Download and process CSV
+            download_stream = blob_client.download_blob()
+            csv_content = download_stream.readall().decode('utf-8').splitlines()
             
+            # Search for user email and get second column
+            card_number = None
+            for line in csv_content:
+                columns = line.split(',')
+                if len(columns) >= 2 and columns[0].strip().lower() == user_email.lower():
+                    card_number = columns[1].strip()
+                    
+                    break
+            
+            if not card_number:
+                logging.warning(f"No card number found for email: {user_email}")
+                return func.HttpResponse(
+                    body="Card number not found for user",
+                    status_code=404
+                )
+            
+            logging.info(f"Found card number: {card_number} for email: {user_email}")
+            # Convert card_number to base64
+            import base64
+            card_number_bytes = card_number.encode('utf-8')
+            card_number_base64 = base64.b64encode(card_number_bytes).decode('utf-8')
+            
+            logging.info(f"Card number encoded to base64: {card_number_base64}")
+            
+            # Make API call to update the card number for the user
+            try:
+                headers = {
+                    'Authorization': f'Bearer {access_token}',
+                    'Content-Type': 'application/json'
+                }
+                
+                card_update_payload = {
+                    "secret": card_number_base64
+                }
+                
+                async with client.post(
+                    f'https://api.printix.net/cloudprint/tenants/{tenant_id}/users/{user_id}/cards',
+                    headers=headers,
+                    json=card_update_payload
+                ) as update_response:
+                    if not update_response.ok:
+                        logging.error(f"Failed to update card number. Status: {update_response.status}")
+                        return func.HttpResponse(
+                            body="Failed to update card number",
+                            status_code=500
+                        )
+                    
+                    logging.info("Card number updated successfully.")
+                    
+            except Exception as ex:
+                logging.error(f"Failed to update card number: {str(ex)}")
+                return func.HttpResponse(
+                    body="Failed to update card number",
+                    status_code=500
+                )
+            
+            # Return success response with all gathered information
             return func.HttpResponse(
                 body=json.dumps({
-                    "message": "Successfully processed",
                     "userId": user_id,
-                    "tenantId": tenant_id,
-                    "userEmail": user_email
+                    "email": user_email,
+                    "cardNumber": card_number,
+                    "cardNumberBase64": card_number_base64,
+                    "message": "Card number updated successfully"
                 }),
+                mimetype="application/json",
                 status_code=200
             )
-            
-            
+
     except Exception as ex:
         logging.error(f"Unexpected error: {str(ex)}")
         return func.HttpResponse(
             body="Internal server error occurred.",
             status_code=500
         )
-    
-# New HelloWorld function
-@app.function_name(name="HelloWorld")
-@app.route(route="hello", auth_level=func.AuthLevel.ANONYMOUS, methods=["POST"])
-def hello_world(req: func.HttpRequest) -> func.HttpResponse:
-    # Connection string should be in your app settings
-    connection_string = os.environ['StorageConnectionString']
-    
-    # Create blob service client
-    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-    
-    # Get container client
-    container_client = blob_service_client.get_container_client("cuttysark-accesscards")
-    
-    # Get blob client
-    blob_client = container_client.get_blob_client("UserCardDetails.csv")
-    
-    # Download and read first line
-    download_stream = blob_client.download_blob()
-    first_line = download_stream.readall().decode('utf-8').split('\n')[0]
-    
-    return func.HttpResponse(
-        body=f"First line of file: {first_line}",
-        mimetype="text/plain"
-    )
