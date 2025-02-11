@@ -1,4 +1,4 @@
-# Azure Function for Printix WebHook Integration
+# Azure Function for Printix WebHook Integration Written in Python
 
 Azure Function in Python  
 
