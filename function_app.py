@@ -159,8 +159,6 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
             connection_string = os.environ['StorageConnectionString']  # e.g., "your connection string"
             container_name = os.environ['StorageContainerName']  # e.g., "your container name"
             file_name = os.environ['StorageFileName']  # e.g., "your csv filename"
-            #--remove container_client = blob_service_client.get_container_client("cuttysark-accesscards")
-            #--remove blob_client = container_client.get_blob_client("UserCardDetails.csv")
 
             blob_service_client = BlobServiceClient.from_connection_string(connection_string)
             container_client = blob_service_client.get_container_client(container_name)
