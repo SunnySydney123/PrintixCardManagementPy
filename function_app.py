@@ -156,11 +156,15 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                     status_code=500
                 )
              # After getting user_email, lookup in CSV file to get the card number
-            connection_string = os.environ['StorageConnectionString']
+            connection_string = os.environ['StorageConnectionString']  # e.g., "your connection string"
+            container_name = os.environ['StorageContainerName']  # e.g., "your container name"
+            file_name = os.environ['StorageFileName']  # e.g., "your csv filename"
+            #--remove container_client = blob_service_client.get_container_client("cuttysark-accesscards")
+            #--remove blob_client = container_client.get_blob_client("UserCardDetails.csv")
+
             blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-            container_client = blob_service_client.get_container_client("cuttysark-accesscards")
-            blob_client = container_client.get_blob_client("UserCardDetails.csv")
-            
+            container_client = blob_service_client.get_container_client(container_name)
+            blob_client = container_client.get_blob_client(file_name)
             # Download and process CSV
             download_stream = blob_client.download_blob()
             csv_content = download_stream.readall().decode('utf-8').splitlines()
