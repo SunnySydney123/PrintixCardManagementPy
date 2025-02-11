@@ -22,7 +22,9 @@ When Printix sends a WebHook on a **New User Create** event, this function will:
 
 - **PRINTIX_CLIENT_ID**  
 - **PRINTIX_CLIENT_SECRET**  
-- **CONNECTION_STRING**  
+- **CONNECTION_STRING**
+- **StorageContainerName**
+- **StorageFileName**
 
 These are saved as **environment variables** in **Azure Function Configuration**  
 
