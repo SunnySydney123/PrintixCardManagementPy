@@ -14,15 +14,17 @@ When Printix sends a WebHook on a **New User Create** event, this function will:
 
 ## Development Setup  
 
-- The function is written in **VS Code**, the **Microsoft-recommended IDE** for **Azure Functions**  
+- The function is written in **VS Code**, the **Microsoft-recommended IDE** for **Azure Functions**
+- Install Extensions **Azure Functions**
 - Install **Azure Functions Core Tools**  
 - Supported **Python version**: **3.11.X** (as of this file's creation)  
 
 ## Environment Variables  
 
-- **PRINTIX_CLIENT_ID**  
-- **PRINTIX_CLIENT_SECRET**  
-- **CONNECTION_STRING**
+- **PrintixClientId**
+- **PrintixTenantId**  
+- **PrintixClientSecret**  
+- **StorageConnectionString**
 - **StorageContainerName**
 - **StorageFileName**
 
