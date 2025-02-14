@@ -1,3 +1,4 @@
+# Demo code written by Sunil Sharma at Tungsten Automation. Please use for testing only.
 import azure.functions as func
 from azure.storage.blob import BlobServiceClient
 import os
